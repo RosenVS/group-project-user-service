@@ -23,11 +23,21 @@ builder.Services.AddIdentityCore<MyUser>()
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseInMemoryDatabase("InMemoryDb"));
 
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("AllowLocalhost3000", builder =>
+//     {
+//         builder.WithOrigins("http://localhost:3000")
+//             .AllowAnyHeader()
+//             .AllowAnyMethod()
+//             .AllowCredentials();
+//     });
+// });
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowLocalhost3000", builder =>
     {
-        builder.WithOrigins("http://localhost:3000")
+        builder.WithOrigins("http://localhost:3000", "https://groupproject-frontend-hlfxsphkja-ew.a.run.app")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
