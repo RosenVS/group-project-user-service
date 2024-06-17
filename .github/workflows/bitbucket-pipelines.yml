@@ -1,0 +1,40 @@
+name: Build and Deploy to Cloud Run
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  PROJECT_ID: inbound-pattern-422518-k7 
+  APP_NAME: user-service 
+  SER_NAME: user-service 
+  REGION: europe-west1 
+  SER_PORT: 5075 
+
+jobs:
+  deploy:
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+
+      - name: Build Image, Push to Registry, Deploy to Cloud Run
+        run: |
+          export IMAGE_NAME=europe-west1-docker.pkg.dev/${{env.PROJECT_ID}}/${{env.APP_NAME}}/${{env.SER_NAME}}:$GITHUB_SHA
+          echo '${{ secrets.KEY_FILE }}' | jq '.' > client-secret.json
+          gcloud auth activate-service-account individual-account@inbound-pattern-422518-k7.iam.gserviceaccount.com --key-file client-secret.json
+          gcloud config set project ${{env.PROJECT_ID}}
+          gcloud auth configure-docker europe-west1-docker.pkg.dev
+          export DOCKER_BUILDKIT=0
+          cd user-service
+          docker build -t $IMAGE_NAME .
+          docker push $IMAGE_NAME
+          gcloud run deploy ${{env.SER_NAME}} --image $IMAGE_NAME --port ${{env.SER_PORT}} --region ${{env.REGION}} --cpu=1 --memory=1Gi --timeout=3000 --allow-unauthenticated || true
+        env:
+          KEY_FILE: ${{ secrets.KEY_FILE }}
